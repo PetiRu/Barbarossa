@@ -1,5 +1,7 @@
 # BARBAROSSA
 
+![BARBAROSSA Banner](assets/banner.png)
+
 Inspect. Probe. Fortify.
 
 **BARBAROSSA** is a deterministic, non-destructive web application security inspection and authorized testing toolkit for developers, students, website owners, and defensive security professionals.
