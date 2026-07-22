@@ -2,85 +2,68 @@
 
 ![BARBAROSSA Banner](assets/banner.png)
 
-Inspect. Probe. Fortify.
+**BARBAROSSA** is a deterministic, non-destructive web application security inspection and authorized testing toolkit. It is designed for developers, security students, and defensive security professionals to identify vulnerabilities through both static analysis and active probing.
 
-**BARBAROSSA** is a deterministic, non-destructive web application security inspection and authorized testing toolkit for developers, students, website owners, and defensive security professionals.
-
-## ⚠️ IMPORTANT DISCLAIMER
+## Important Disclaimer
 
 **Use BARBAROSSA only on systems you own or are explicitly authorized to test.**
 
-Unauthorized security testing may be illegal. BARBAROSSA enforces strict authorization requirements by default.
+Unauthorized security testing may be illegal. BARBAROSSA enforces strict authorization requirements by default to ensure ethical and legal use.
 
-## Features
+## Core Features
 
 ### Stage 1: Static Inspection (INSPECT)
-
 Analyze source code for security vulnerabilities using deterministic rules:
-
-- **Python** - AST-based analysis for dangerous patterns
-- **JavaScript/TypeScript** - Pattern-based code inspection
-- **Configuration Files** - JSON, YAML, TOML, INI, .env, Dockerfile
-- **Secret Detection** - Credentials, API keys, tokens, private keys
-- **Common Issues** - SQL injection indicators, unsafe deserialization, weak hashing, CORS misconfig
+* **Python**: AST-based analysis for dangerous coding patterns.
+* **JavaScript/TypeScript**: Pattern-based code inspection.
+* **Configuration Files**: Security checks for JSON, YAML, TOML, INI, .env, and Dockerfiles.
+* **Secret Detection**: Identification of credentials, API keys, tokens, and private keys.
+* **Vulnerability Patterns**: Detection of SQL injection indicators, unsafe deserialization, weak hashing, and CORS misconfigurations.
 
 ### Stage 2: Active Probes (PROBE)
-
-Non-destructive HTTP security checks on authorized targets:
-
-- **HTTPS & Redirects** - TLS configuration and HTTP→HTTPS enforcement
-- **Security Headers** - CSP, HSTS, X-Content-Type-Options, etc.
-- **Cookies & Auth** - Secure flags, HttpOnly, SameSite, CSRF tokens
-- **Input Reflection** - Harmless XSS/SQL injection indicators
-- **Common Issues** - Directory listing, exposed files, verbose errors
-- **Rate-Limited** - 2 req/sec, 150 total, 10s timeout (configurable)
+Perform non-destructive HTTP security checks on authorized targets:
+* **Transport Security**: Validation of TLS configuration and HTTPS enforcement.
+* **Security Headers**: Verification of CSP, HSTS, X-Content-Type-Options, and other critical headers.
+* **Session Management**: Inspection of cookie flags (Secure, HttpOnly, SameSite) and CSRF protection.
+* **Input Reflection**: Safe testing for XSS and SQL injection indicators.
+* **Environment Checks**: Detection of directory listing, exposed files, and verbose error messages.
+* **Resource Respect**: Configurable rate-limiting (default: 2 req/sec) to prevent service disruption.
 
 ### Reporting
+Generate comprehensive reports in multiple formats:
+* **Console**: Real-time findings with structured output.
+* **JSON**: Structured data for automated pipeline integration.
+* **HTML**: Visual reports with charts and detailed findings.
+* **SARIF**: GitHub-compatible security format for integration with GitHub Advanced Security.
 
-Generate professional reports in multiple formats:
+### Educational Mode
+A dedicated mode for security students that explains:
+* The purpose and mechanism of each test.
+* Expected results and common pitfalls.
+* Remediation strategies and exercises.
 
-- **Console** - Real-time findings with color and formatting
-- **JSON** - Structured data for integration
-- **HTML** - Beautiful, shareable reports with charts
-- **SARIF** - GitHub-compatible security format
+## Security and Design Principles
 
-### Learning Mode
-
-Educational mode for security students:
-
-- Explain what each test does
-- Ask learner to predict the result
-- Run the safe check
-- Explain the outcome
-- Provide remediation exercises
-
-## Security Design
-
-✅ **Deterministic** - No ML, LLMs, or probabilistic algorithms  
-✅ **Non-destructive** - Never modifies target systems  
-✅ **Authorization-first** - Requires explicit scope and consent  
-✅ **Scope-enforced** - Strict allowlist, blocks cloud metadata, DNS rebinding  
-✅ **Rate-limited** - Respects target resources  
-✅ **Emergency-stop** - `STOP_BARBAROSSA` file halts all scans  
-✅ **Auditable** - Full request logging and redacted reports  
+* **Deterministic**: Relies on defined rules rather than probabilistic models.
+* **Non-destructive**: Ensures no modifications are made to the target system.
+* **Authorization-centric**: Requires explicit confirmation of scope and consent.
+* **Safety-enforced**: Includes a strict allowlist and protection against DNS rebinding.
+* **Emergency Halt**: Support for a `STOP_BARBAROSSA` trigger file to immediately terminate scans.
 
 ## Installation
 
 ### Requirements
-
-- Python 3.12+
-- pip or uv
+* Python 3.12+
+* pip or uv
 
 ### From Source
-
 ```bash
 git clone https://github.com/PetiRu/Barbarossa.git
 cd Barbarossa
 pip install -e .
 ```
 
-### Development
-
+### Development Setup
 ```bash
 pip install -e ".[dev]"
 ruff check .
@@ -88,221 +71,54 @@ mypy barbarossa
 pytest
 ```
 
-## Quick Start
+## Usage and Commands
 
-### 1. Run Static Inspection
+### Quick Start
+1. **Static Inspection**:
+   ```bash
+   barbarossa inspect ./src
+   ```
+2. **Active Probes**:
+   ```bash
+   barbarossa probe http://localhost:8000 --authorized
+   ```
+3. **Full Scan**:
+   ```bash
+   barbarossa scan --source ./src --target http://localhost:8000 --authorized
+   ```
 
-Scan your source code:
-
+### Command Reference
 ```bash
-barbarossa inspect ./my-website
-```
+# Run static analysis only
+barbarossa inspect [SOURCE_DIR]
 
-### 2. Start the Vulnerable Demo
+# Run active HTTP probes only
+barbarossa probe [TARGET_URL] --authorized
 
-```bash
-cd examples/vulnerable_demo_app
-python app.py
-```
+# Run full inspection and probes
+barbarossa scan --source [DIR] --target [URL] --authorized
 
-In another terminal:
-
-```bash
-barbarossa probe http://127.0.0.1:8000 --authorized
-```
-
-### 3. Run Complete Scan
-
-```bash
-barbarossa scan \
-  --source ./my-website \
-  --target http://127.0.0.1:8000 \
-  --authorized \
-  --format console,json,html
-```
-
-### 4. Use Configuration File
-
-Create `config.toml`:
-
-```toml
-[scan]
-target_url = "http://127.0.0.1:8000"
-source_directory = "./my-website"
-authorized_targets = ["localhost", "127.0.0.1"]
-
-[security]
-requests_per_second = 2
-max_requests = 150
-request_timeout = 10
-max_redirects = 3
-
-[output]
-formats = ["console", "json", "html", "sarif"]
-```
-
-Run:
-
-```bash
-barbarossa scan --config config.toml --authorized
-```
-
-## Commands
-
-```bash
-# Static inspection only
-barbarossa inspect ./source-dir
-
-# Active probes only
-barbarossa probe http://localhost:8000
-
-# Complete scan (both stages)
-barbarossa scan --source ./src --target http://localhost:8000
-
-# With custom options
-barbarossa scan \
-  --source ./src \
-  --target http://localhost:8000 \
-  --authorized \
-  --requests-per-second 3 \
-  --max-requests 200 \
-  --format console,html,json \
-  --output reports/
-
-# Learning mode
-barbarossa probe http://localhost:8000 --learning-mode
-
-# Dry run (show scope without testing)
-barbarossa scan --config config.toml --dry-run
-
-# Explain findings
-barbarossa inspect ./src --explain
-
-# Verbose output
-barbarossa scan --config config.toml --verbose
-```
-
-## Full Option Reference
-
-```bash
-barbarossa [COMMAND] [OPTIONS]
-
-Commands:
-  inspect    Static code analysis
-  probe      Active HTTP security checks
-  scan       Complete inspection + probes
-
-Global Options:
-  --source DIR              Source directory for static inspection
-  --target URL              Target URL for active probes
-  --config FILE             Configuration file (TOML)
-  --authorized              Confirm authorization for this target
-  --allowlist DOMAIN        Add domain to allowlist (repeatable)
-  --requests-per-second N   Rate limit (default: 2)
-  --max-requests N          Maximum requests (default: 150)
-  --timeout SECONDS         Request timeout (default: 10)
-  --format FORMAT           Output format: console,json,html,sarif
-  --output DIR              Output directory (default: ./reports/)
-  --learning-mode           Educational mode with explanations
-  --explain                 Add beginner-friendly explanations
-  --verbose                 Verbose logging
-  --dry-run                 Show scope without testing
-  --help                    Show help
-```
-
-## Examples
-
-### Test Your Local Website
-
-```bash
-# Start your development server
-python -m http.server 8000
-
-# In another terminal
-barbarossa scan \
-  --source . \
-  --target http://127.0.0.1:8000 \
-  --authorized \
-  --format console,html
-```
-
-Reports are saved to `reports/barbarossa-report.*`
-
-### Add Public Domains to Allowlist
-
-Only required for public domains (localhost/private IPs allowed by default):
-
-```bash
-barbarossa probe https://example.com \
-  --authorized \
-  --allowlist example.com \
-  --allowlist www.example.com
-```
-
-### CI/CD Integration
-
-```bash
-# In your GitHub Actions or CI
-barbarossa scan \
-  --source . \
-  --target http://localhost:8000 \
-  --authorized \
-  --format sarif \
-  --output .
-
-# Results available in barbarossa-report.sarif
-```
-
-Env var bypass (still respects allowlist):
-
-```bash
-export BARBAROSSA_AUTHORIZED=true
-barbarossa probe http://localhost:8000
+# Learning mode for educational purposes
+barbarossa probe [URL] --learning-mode
 ```
 
 ## Documentation
-
-Detailed documentation in `docs/`:
-
-- **[Getting Started](docs/getting-started.md)** - Installation and first scan
-- **[Authorization and Scope](docs/authorization-and-scope.md)** - Security model
-- **[Static Inspection](docs/static-inspection.md)** - Code analysis rules
-- **[Active Probes](docs/active-probes.md)** - HTTP checks
-- **[Reports](docs/reports.md)** - Output formats
-- **[Learning Mode](docs/learning-mode.md)** - Educational features
-- **[Adding Custom Rules](docs/adding-custom-rules.md)** - Extend BARBAROSSA
+Detailed guides are available in the `docs/` directory:
+* [Getting Started](docs/getting-started.md)
+* [Authorization and Scope](docs/authorization-and-scope.md)
+* [Static Inspection](docs/static-inspection.md)
+* [Active Probes](docs/active-probes.md)
+* [Reporting Formats](docs/reports.md)
 
 ## Limitations
-
-⚠️ **BARBAROSSA reports security indicators and potential weaknesses.**  
-**A finding does not automatically prove exploitability.**  
-**Manual verification is required.**
-
-- No automated exploitation
-- No payload execution
-- No password brute-forcing
-- No data exfiltration
-- No DoS/flooding
-- No evasion techniques
-- No authentication bypass
-- No remote code execution
+BARBAROSSA is an inspection tool, not an exploitation framework. It does not perform:
+* Automated exploitation or payload execution.
+* Password brute-forcing or credential stuffing.
+* Data exfiltration or Denial of Service (DoS) attacks.
+* Authentication bypass or Remote Code Execution (RCE).
 
 ## Contributing
-
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are welcome. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
-
-MIT License - See [LICENSE](LICENSE) file.
-
-## Code of Conduct
-
-Please see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
-
-## Security Policy
-
-See [SECURITY.md](SECURITY.md) for reporting security issues.
-
----
-
-Built with ❤️ for defensive security professionals and developers.
+Distributed under the MIT License. See `LICENSE` for more information.
