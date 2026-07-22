@@ -102,6 +102,16 @@ barbarossa scan --source [DIR] --target [URL] --authorized
 barbarossa probe [URL] --learning-mode
 ```
 
+### Help and Version
+To see the full list of options and commands:
+```bash
+barbarossa --help
+```
+To check the installed version:
+```bash
+barbarossa --version
+```
+
 ## Documentation
 Detailed guides are available in the `docs/` directory:
 * [Getting Started](docs/getting-started.md)
