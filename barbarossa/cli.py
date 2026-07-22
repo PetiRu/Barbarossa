@@ -184,6 +184,35 @@ def scan(
         sarif_file = output_path / "barbarossa-report.sarif"
         SARIFReporter().report(result, sarif_file)
         console.print(f"[green]✓ SARIF report: {sarif_file}[/green]")
+@app.command()
+def report(
+    file: Optional[str] = typer.Option(None, help="JSON report file to view"),
+    dir: str = typer.Option("./reports", help="Directory to look for reports"),
+) -> None:
+    """View the latest or a specific scan report in terminal."""
+    print_banner()
+    report_file = None
+    if file:
+        report_file = Path(file)
+    else:
+        # Find latest JSON report in directory
+        report_dir = Path(dir)
+        if report_dir.exists():
+            json_files = list(report_dir.glob("barbarossa-report.json"))
+            if json_files:
+                # In this simplified case, we just look for the default filename
+                report_file = json_files[0]
+    if not report_file or not report_file.exists():
+        console.print(f"[red]Error: Report file not found.[/red]")
+        sys.exit(1)
+    try:
+        json_content = report_file.read_text()
+        result = ScanResult.from_json(json_content)
+        console_reporter = ConsoleReporter()
+        console_reporter.report(result)
+    except Exception as e:
+        console.print(f"[red]Error loading report: {e}[/red]")
+        sys.exit(1)
 def version_callback(value: bool):
     if value:
         console.print(f"BARBAROSSA {__version__}")
