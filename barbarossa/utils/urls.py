@@ -1,6 +1,17 @@
 """URL and hostname utilities."""
 
-from urllib.parse import urljoin, urlparse
+from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
+
+SENSITIVE_QUERY_KEYS = {
+    "api_key",
+    "apikey",
+    "access_token",
+    "auth",
+    "authorization",
+    "password",
+    "secret",
+    "token",
+}
 
 
 def extract_hostname(url: str) -> str:
@@ -68,13 +79,29 @@ def extract_endpoints(url: str) -> list[str]:
 
 
 def sanitize_url_for_display(url: str) -> str:
-    """Sanitize URL for display in reports."""
+    """Remove credentials and sensitive query values before reporting a URL."""
     if not url:
         return ""
 
-    # Limit length
-    max_len = 200
-    if len(url) > max_len:
-        return url[:max_len] + "..."
+    parsed = urlparse(url)
+    hostname = parsed.hostname or ""
+    try:
+        port = f":{parsed.port}" if parsed.port is not None else ""
+    except ValueError:
+        port = ""
+    netloc = f"{hostname}{port}"
+    query = urlencode(
+        [
+            (key, "[REDACTED]" if key.lower() in SENSITIVE_QUERY_KEYS else value)
+            for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+        ]
+    )
+    sanitized = urlunparse(
+        (parsed.scheme, netloc, parsed.path, parsed.params, query, parsed.fragment)
+    )
 
-    return url
+    max_len = 200
+    if len(sanitized) > max_len:
+        return sanitized[:max_len] + "..."
+
+    return sanitized

@@ -8,7 +8,8 @@ BARBAROSSA enforces strict authorization requirements by default to prevent unau
 
 ### Allowed by Default
 
-These targets do NOT require authorization:
+These targets are in scope by default, but active probes still require an authorization
+confirmation:
 
 - **Localhost**: `localhost`, `127.0.0.1`, `::1`
 - **Private IPs** (RFC1918): `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
@@ -97,6 +98,15 @@ Then:
 barbarossa scan --config config.toml --authorized
 ```
 
+Internal DNS names are denied when they resolve to private addresses unless that behavior is
+explicitly requested with a `private:` scope entry:
+
+```bash
+barbarossa probe http://app.internal:8000 \
+  --authorized \
+  --allowlist private:app.internal:8000
+```
+
 ## Redirect Validation
 
 BARBAROSSA follows redirects only if they stay in scope:
@@ -115,10 +125,10 @@ The tool will refuse to follow redirects outside the authorized scope.
 
 BARBAROSSA validates DNS resolution to prevent DNS rebinding attacks:
 
-1. Resolves hostname to IP
-2. Checks IP is not blocked/reserved
-3. Validates against scope
-4. Proceeds with request
+1. Resolves every A and AAAA address
+2. Rejects metadata, link-local, multicast, reserved, and unexpected private addresses
+3. Pins the validated addresses into the connection backend so HTTPX cannot resolve the name again
+4. Repeats the validation and pinning for every redirect hop
 
 Example block:
 
@@ -173,7 +183,8 @@ Create a file to stop all active scans:
 touch STOP_BARBAROSSA
 ```
 
-All running probes will stop immediately and cleanly shutdown.
+Running probes stop before the next request. New static or active scans are rejected until the file
+is removed. Set `BARBAROSSA_STOP_FILE` to use a different path.
 
 ## Security Model
 
@@ -184,7 +195,7 @@ BARBAROSSA uses **defense in depth**:
 3. **DNS validation** - Prevents DNS rebinding
 4. **Redirect validation** - Follows only in-scope redirects
 5. **Rate limiting** - Protects target systems
-6. **Request logging** - Full audit trail
+6. **Report redaction** - Secrets and URL credentials are removed before output
 
 ## Responsible Use
 

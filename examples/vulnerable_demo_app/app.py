@@ -35,6 +35,12 @@ def init_db() -> None:
 init_db()
 
 
+@app.get("/health")
+def health_check() -> dict:
+    """Container health endpoint for the isolated demo environment."""
+    return {"status": "healthy"}
+
+
 @app.get("/")
 def read_root() -> HTMLResponse:
     """Root endpoint with visible debug info."""
@@ -115,4 +121,5 @@ def get_config() -> dict:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # noqa: S104 - container listener

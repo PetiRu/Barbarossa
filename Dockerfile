@@ -1,59 +1,37 @@
-# Use Python 3.12 slim image for a small footprint
-FROM python:3.12-slim as builder
+FROM python:3.12-slim AS builder
 
-WORKDIR /app
+WORKDIR /build
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+COPY pyproject.toml README.md ./
+COPY barbarossa ./barbarossa
 
-# Copy dependency files
-COPY pyproject.toml requirements.txt ./
+# Building and installing the wheel exercises the same artifact shipped to users.
+RUN pip wheel --no-cache-dir --wheel-dir /wheels .
 
-# Install dependencies
-RUN pip install --user --no-cache-dir -r requirements.txt
 
-# Production stage
 FROM python:3.12-slim
 
-# Security: Create non-root user
-RUN groupadd -r barbarossa && useradd -r -g barbarossa -u 1000 barbarossa
+RUN groupadd --system barbarossa \
+    && useradd --system --gid barbarossa --uid 1000 barbarossa \
+    && mkdir -p /app/reports \
+    && chown -R barbarossa:barbarossa /app
+
+COPY --from=builder /wheels /wheels
+RUN pip install --no-cache-dir --no-index --find-links=/wheels barbarossa \
+    && rm -rf /wheels
 
 WORKDIR /app
-
-# Copy installed packages from builder
-COPY --from=builder /root/.local /home/barbarossa/.local
-
-# Copy application code
-COPY --chown=barbarossa:barbarossa . .
-
-# Create directories for reports
-RUN mkdir -p /app/reports && chown -R barbarossa:barbarossa /app
-
-# Security: Drop privileges
 USER barbarossa
 
-# Add user site to PATH
-ENV PATH=/home/barbarossa/.local/bin:$PATH
-ENV PYTHONPATH=/app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install the package in editable mode for the user
-RUN pip install --user --no-cache-dir -e .
-
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD barbarossa --help || exit 1
 
-# Set entrypoint
 ENTRYPOINT ["barbarossa"]
-
-# Default command
 CMD ["--help"]
 
-# Labels
 LABEL maintainer="BARBAROSSA Contributors"
 LABEL description="BARBAROSSA - Deterministic Web Application Security Testing Toolkit"
 LABEL version="0.1.0"

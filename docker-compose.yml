@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Main BARBAROSSA scanner
   barbarossa:
@@ -23,6 +21,10 @@ services:
       --format console,json,html,sarif
       --output /app/reports
       --authorized
+      --allowlist private:vulnerable-demo
+    depends_on:
+      vulnerable-demo:
+        condition: service_healthy
     networks:
       - barbarossa-net
 

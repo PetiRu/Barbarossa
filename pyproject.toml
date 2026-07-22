@@ -24,10 +24,11 @@ classifiers = [
 ]
 
 dependencies = [
-    "httpx>=0.25.0",
+    "httpx>=0.28.0,<1",
+    "httpcore>=1.0.0,<2",
     "pydantic>=2.0",
     "rich>=13.0",
-    "typer[all]>=0.9.0",
+    "typer>=0.9.0",
     "jinja2>=3.1.0",
 ]
 
@@ -42,15 +43,18 @@ dev = [
 ]
 
 [project.scripts]
-barbarossa = "barbarossa.cli:main"
+barbarossa = "barbarossa.cli:app"
 
-[tool.setuptools]
-packages = ["barbarossa"]
+[tool.setuptools.packages.find]
+include = ["barbarossa*"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "C4"]
+ignore = ["E501"]
 
 [tool.mypy]
 python_version = "3.11"

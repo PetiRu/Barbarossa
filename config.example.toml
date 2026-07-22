@@ -9,6 +9,7 @@ source_directory = "./my-website"
 
 # List of authorized targets (public domains must be explicitly added)
 # Localhost and private IPs are allowed by default
+# Internal DNS names that resolve to private IPs use "private:hostname[:port]"
 authorized_targets = [
     "localhost",
     "127.0.0.1",

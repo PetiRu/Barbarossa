@@ -37,6 +37,7 @@ class RuleRegistry:
         file_patterns: list[str],
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Decorator to register a rule."""
+
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             rule = InspectionRule(
                 id=id,
@@ -48,6 +49,7 @@ class RuleRegistry:
             )
             self.rules[id] = rule
             return func
+
         return decorator
 
     def get_rules(self) -> list[InspectionRule]:

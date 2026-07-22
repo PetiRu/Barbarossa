@@ -48,5 +48,7 @@ def check_docker_compose_security(file_path: str, content: str) -> Generator[Fin
                             file_path=file_path,
                             line_number=i + 1,
                             recommendation="Map to high-numbered ports (> 1024) and use reverse proxy if needed.",
-                            references=["https://www.iana.org/assignments/service-names-port-numbers/"],
+                            references=[
+                                "https://www.iana.org/assignments/service-names-port-numbers/"
+                            ],
                         )

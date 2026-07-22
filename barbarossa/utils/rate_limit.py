@@ -3,6 +3,8 @@
 import time
 from dataclasses import dataclass
 
+from barbarossa.safety import is_stop_requested
+
 
 @dataclass
 class RateLimiter:
@@ -16,6 +18,16 @@ class RateLimiter:
 
     def __post_init__(self) -> None:
         """Initialize internal state after dataclass init."""
+        if self.requests_per_second <= 0:
+            raise ValueError("requests_per_second must be greater than zero")
+        if self.max_requests <= 0:
+            raise ValueError("max_requests must be greater than zero")
+        if self.request_timeout_seconds <= 0:
+            raise ValueError("request_timeout_seconds must be greater than zero")
+        if self.max_redirects <= 0:
+            raise ValueError("max_redirects must be greater than zero")
+        if self.max_consecutive_errors <= 0:
+            raise ValueError("max_consecutive_errors must be greater than zero")
         self.request_count = 0
         self.consecutive_errors = 0
         self.last_request_time: float | None = None
@@ -53,4 +65,4 @@ class RateLimiter:
 
     def should_stop(self) -> bool:
         """Check if scanning should stop."""
-        return self.is_exhausted() or self.has_too_many_errors()
+        return self.is_exhausted() or self.has_too_many_errors() or is_stop_requested()

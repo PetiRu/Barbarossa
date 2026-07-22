@@ -34,7 +34,7 @@ The repository includes a vulnerable demo app for learning:
 
 ```bash
 cd examples/vulnerable_demo_app
-pip install fastapi uvicorn
+pip install -r requirements.txt
 python app.py
 ```
 
@@ -61,7 +61,6 @@ barbarossa probe http://127.0.0.1:8000 --authorized
 
 You should see findings like:
 - Missing security headers
-- Weak CORS configuration
 - Exposed endpoints
 
 ### 4. Generate Reports
@@ -75,7 +74,6 @@ barbarossa scan \
 ```
 
 Reports appear in `./reports/`:
-- `barbarossa-report.console` - Terminal output
 - `barbarossa-report.json` - Structured data
 - `barbarossa-report.html` - Beautiful report
 - `barbarossa-report.sarif` - GitHub integration

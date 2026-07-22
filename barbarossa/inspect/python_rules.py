@@ -33,9 +33,11 @@ def check_pickle_usage(tree: ast.AST, file_path: str) -> Generator[Finding, None
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
             if isinstance(node.func, ast.Attribute):
-                if (isinstance(node.func.value, ast.Name) and
-                    node.func.value.id == "pickle" and
-                    node.func.attr in ("loads", "load")):
+                if (
+                    isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "pickle"
+                    and node.func.attr in ("loads", "load")
+                ):
                     yield Finding(
                         id="PYTHON_INSECURE_DESERIALIZATION",
                         title="Use of insecure pickle deserialization",
@@ -47,31 +49,60 @@ def check_pickle_usage(tree: ast.AST, file_path: str) -> Generator[Finding, None
                         file_path=file_path,
                         line_number=node.lineno,
                         recommendation="Use json.loads() for JSON data or prefer safer serialization formats.",
-                        references=["https://owasp.org/www-community/Deserialization_of_untrusted_data"],
+                        references=[
+                            "https://owasp.org/www-community/Deserialization_of_untrusted_data"
+                        ],
                     )
 
 
 def check_sql_string_formatting(tree: ast.AST, file_path: str) -> Generator[Finding, None, None]:
-    """Detect SQL queries with string formatting (SQL injection risk)."""
+    """Detect dynamic SQL built with f-strings, formatting, or concatenation."""
+    sql_keywords = ("SELECT", "INSERT", "UPDATE", "DELETE", "DROP", "CREATE")
+
+    def contains_sql(node: ast.AST) -> bool:
+        return any(
+            isinstance(child, ast.Constant)
+            and isinstance(child.value, str)
+            and any(keyword in child.value.upper() for keyword in sql_keywords)
+            for child in ast.walk(node)
+        )
+
     for node in ast.walk(tree):
-        # Check for string formatting operations on potential SQL strings
-        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mod):
-            if isinstance(node.left, ast.Constant) and isinstance(node.left.value, str):
-                sql_keywords = ("SELECT", "INSERT", "UPDATE", "DELETE", "DROP", "CREATE")
-                if any(kw in node.left.value.upper() for kw in sql_keywords):
-                    yield Finding(
-                        id="PYTHON_SQL_INJECTION",
-                        title="Potential SQL injection via string formatting",
-                        category=Category.INJECTION,
-                        severity=Severity.HIGH,
-                        confidence=Confidence.MEDIUM,
-                        description="SQL queries built with string formatting are vulnerable to injection.",
-                        evidence="SQL string with % formatting",
-                        file_path=file_path,
-                        line_number=node.lineno,
-                        recommendation="Use parameterized queries with ? or %s placeholders and pass parameters separately.",
-                        references=["https://owasp.org/www-community/attacks/SQL_Injection"],
-                    )
+        dynamic_sql = False
+        construction = "dynamic string construction"
+
+        if isinstance(node, ast.JoinedStr) and contains_sql(node):
+            dynamic_sql = any(isinstance(value, ast.FormattedValue) for value in node.values)
+            construction = "f-string"
+        elif isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Mod, ast.Add)):
+            dynamic_sql = contains_sql(node)
+            construction = "% formatting" if isinstance(node.op, ast.Mod) else "concatenation"
+        elif (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "format"
+            and contains_sql(node.func.value)
+        ):
+            dynamic_sql = True
+            construction = ".format()"
+
+        if dynamic_sql:
+            line_number = node.lineno if isinstance(node, ast.expr) else 1
+            yield Finding(
+                id="PYTHON_SQL_INJECTION",
+                title="Potential SQL injection via dynamic query construction",
+                category=Category.INJECTION,
+                severity=Severity.HIGH,
+                confidence=Confidence.MEDIUM,
+                description="SQL queries built from dynamic strings may allow injection.",
+                evidence=f"SQL string built with {construction}",
+                file_path=file_path,
+                line_number=line_number,
+                recommendation=(
+                    "Use parameterized queries and pass all values separately from the SQL text."
+                ),
+                references=["https://owasp.org/www-community/attacks/SQL_Injection"],
+            )
 
 
 def check_subprocess_usage(tree: ast.AST, file_path: str) -> Generator[Finding, None, None]:
@@ -80,11 +111,18 @@ def check_subprocess_usage(tree: ast.AST, file_path: str) -> Generator[Finding, 
         if isinstance(node, ast.Call):
             if isinstance(node.func, ast.Attribute):
                 if isinstance(node.func.value, ast.Name):
-                    if node.func.value.id == "subprocess" and node.func.attr in ("call", "run", "Popen"):
+                    if node.func.value.id == "subprocess" and node.func.attr in (
+                        "call",
+                        "run",
+                        "Popen",
+                    ):
                         # Check for shell=True
                         for keyword in node.keywords:
                             if keyword.arg == "shell":
-                                if isinstance(keyword.value, ast.Constant) and keyword.value.value is True:
+                                if (
+                                    isinstance(keyword.value, ast.Constant)
+                                    and keyword.value.value is True
+                                ):
                                     yield Finding(
                                         id="PYTHON_SHELL_INJECTION",
                                         title="Subprocess call with shell=True",
@@ -96,7 +134,9 @@ def check_subprocess_usage(tree: ast.AST, file_path: str) -> Generator[Finding, 
                                         file_path=file_path,
                                         line_number=node.lineno,
                                         recommendation="Never use shell=True. Pass arguments as a list instead of a string.",
-                                        references=["https://owasp.org/www-community/attacks/Command_Injection"],
+                                        references=[
+                                            "https://owasp.org/www-community/attacks/Command_Injection"
+                                        ],
                                     )
 
 

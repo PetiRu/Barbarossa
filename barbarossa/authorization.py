@@ -9,7 +9,9 @@ def request_authorization(target: str) -> bool:
     print(f"   Target: {target}")
     print("\nYou must confirm ownership or explicit authorization to test this target.")
     print("Unauthorized security testing may be illegal.\n")
-    response = input("I confirm that I own this target or have explicit permission to test it.\nEnter 'I AM AUTHORIZED' to continue: ")
+    response = input(
+        "I confirm that I own this target or have explicit permission to test it.\nEnter 'I AM AUTHORIZED' to continue: "
+    )
     return response.strip() == "I AM AUTHORIZED"
 
 
@@ -43,9 +45,7 @@ def get_authorization(target: str, explicit_auth: bool = False, env_auth: bool =
 
 
 def check_authorization(
-    authorized: bool,
-    target: str | None = None,
-    interactive: bool = True
+    authorized: bool, target: str | None = None, interactive: bool = True
 ) -> bool:
     """
     Check and confirm authorization status.

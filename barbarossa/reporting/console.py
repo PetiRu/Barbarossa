@@ -1,9 +1,12 @@
 """Console reporter for findings."""
 
 from rich.console import Console
+from rich.markup import escape
 from rich.panel import Panel
 
 from barbarossa.models import ScanResult, Severity
+from barbarossa.utils.redaction import redact_evidence
+from barbarossa.utils.urls import sanitize_url_for_display
 
 
 class ConsoleReporter:
@@ -80,16 +83,20 @@ class ConsoleReporter:
             "INFO": "⚪",
         }.get(finding.severity.value, "")
 
-        self.console.print(f"\n{severity_symbol} [{severity_color}]{finding.title}[/{severity_color}]")
+        self.console.print(
+            f"\n{severity_symbol} [{severity_color}]{escape(finding.title)}[/{severity_color}]"
+        )
         self.console.print(f"   Rule ID: {finding.id}")
         self.console.print(f"   Category: {finding.category.value}")
-        self.console.print(f"   Severity: {finding.severity.value} | Confidence: {finding.confidence.value}")
+        self.console.print(
+            f"   Severity: {finding.severity.value} | Confidence: {finding.confidence.value}"
+        )
 
         if finding.file_path:
-            self.console.print(f"   File: {finding.file_path}:{finding.line_number}")
+            self.console.print(f"   File: {escape(finding.file_path)}:{finding.line_number}")
         if finding.endpoint:
-            self.console.print(f"   Endpoint: {finding.endpoint}")
+            self.console.print(f"   Endpoint: {escape(sanitize_url_for_display(finding.endpoint))}")
 
-        self.console.print(f"   Description: {finding.description}")
-        self.console.print(f"   Evidence: {finding.evidence}")
-        self.console.print(f"   Recommendation: {finding.recommendation}")
+        self.console.print(f"   Description: {escape(finding.description)}")
+        self.console.print(f"   Evidence: {escape(redact_evidence(finding.evidence))}")
+        self.console.print(f"   Recommendation: {escape(finding.recommendation)}")
