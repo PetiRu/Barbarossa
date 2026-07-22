@@ -189,7 +189,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <div class="content">
             <div class="warning">
                 <strong>⚠️ Disclaimer:</strong> BARBAROSSA reports security indicators and potential weaknesses.
-                A finding does not automatically prove exploitability. Manual verification is required.
+                A finding does not automatically prove exploitability.
+                Manual verification is required.
             </div>
 
             <div class="section">
