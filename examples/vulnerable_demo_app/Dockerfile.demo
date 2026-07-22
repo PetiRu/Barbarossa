@@ -1,0 +1,23 @@
+# Demo App Dockerfile - Vulnerable Version
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy app
+COPY app.py ./
+
+# Create non-root user
+RUN groupadd -r demo && useradd -r -g demo demo
+RUN chown -R demo:demo /app
+USER demo
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
+    CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+
+CMD ["python3", "app.py"]

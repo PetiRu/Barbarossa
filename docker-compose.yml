@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # Main BARBAROSSA scanner
+  barbarossa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: barbarossa-scanner
+    user: "1000:1000"
+    volumes:
+      # Mount source code for scanning
+      - ${SCAN_SOURCE:-./examples/vulnerable_demo_app}:/scan-source:ro
+      # Mount config directory
+      - ${CONFIG_DIR:-./config}:/app/config:ro
+      # Mount reports output
+      - ${REPORTS_DIR:-./reports}:/app/reports
+      # Mount custom rules if any
+      - ${CUSTOM_RULES_DIR:-./custom_rules}:/app/custom_rules:ro
+    environment:
+      - BARBAROSSA_AUTH_EXPLICIT=true
+      - BARBAROSSA_RATE_LIMIT=10
+      - BARBAROSSA_TIMEOUT=30
+      - PYTHONUNBUFFERED=1
+    command: >
+      scan
+      --source /scan-source
+      --format json,html,sarif
+      --output /app/reports
+      --rate-limit ${BARBAROSSA_RATE_LIMIT:-10}
+      --timeout ${BARBAROSSA_TIMEOUT:-30}
+      --auth-explicit
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import barbarossa; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - barbarossa-net
+
+  # Vulnerable demo app for testing
+  vulnerable-demo:
+    build:
+      context: ./examples/vulnerable_demo_app
+      dockerfile: Dockerfile.demo
+    container_name: barbarossa-vulnerable-demo
+    ports:
+      - "8080:8000"
+    environment:
+      - DEBUG=true
+      - HOST=0.0.0.0
+      - PORT=8000
+    networks:
+      - barbarossa-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # Secure demo app for comparison
+  secure-demo:
+    build:
+      context: ./examples/secure_demo_app
+      dockerfile: Dockerfile.demo
+    container_name: barbarossa-secure-demo
+    ports:
+      - "8081:8000"
+    environment:
+      - DEBUG=false
+      - HOST=0.0.0.0
+      - PORT=8000
+    networks:
+      - barbarossa-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # Report viewer (nginx for static HTML reports)
+  report-viewer:
+    image: nginx:alpine
+    container_name: barbarossa-report-viewer
+    ports:
+      - "8082:80"
+    volumes:
+      - ${REPORTS_DIR:-./reports}:/usr/share/nginx/html:ro
+    networks:
+      - barbarossa-net
+    depends_on:
+      - barbarossa
+
+networks:
+  barbarossa-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  scan-reports:
+    driver: local
