@@ -42,7 +42,7 @@ def extract_endpoints(url: str) -> list[str]:
     endpoints = []
     base = url.rstrip("/")
 
-    common = [
+    common: list[str] = [
         "/",
         "/api",
         "/admin",
