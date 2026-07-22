@@ -27,7 +27,7 @@ def redact_value(value: str, visible_chars: int = 3) -> str:
     if len(value) <= visible_chars:
         return "*" * len(value)
 
-    return value[:visible_chars] + "*" * (len(value) - visible_chars)
+    return value[:visible_chars] + "***"
 
 
 def redact_evidence(evidence: str, max_length: int = 200) -> str:
