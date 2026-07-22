@@ -1,7 +1,6 @@
 """URL and hostname utilities."""
 
-from urllib.parse import urlparse, urljoin
-import re
+from urllib.parse import urljoin, urlparse
 
 
 def extract_hostname(url: str) -> str:
@@ -42,7 +41,7 @@ def extract_endpoints(url: str) -> list[str]:
     """Extract common endpoints to test from a base URL."""
     endpoints = []
     base = url.rstrip("/")
-    
+
     common = [
         "/",
         "/api",
@@ -61,10 +60,10 @@ def extract_endpoints(url: str) -> list[str]:
         "/health",
         "/status",
     ]
-    
+
     for endpoint in common:
         endpoints.append(base + endpoint)
-    
+
     return endpoints
 
 
@@ -72,10 +71,10 @@ def sanitize_url_for_display(url: str) -> str:
     """Sanitize URL for display in reports."""
     if not url:
         return ""
-    
+
     # Limit length
     max_len = 200
     if len(url) > max_len:
         return url[:max_len] + "..."
-    
+
     return url

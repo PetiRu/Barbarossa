@@ -1,31 +1,30 @@
 """HTTP client for probes."""
 
-import httpx
 import logging
-from typing import Optional, Dict
-from urllib.parse import urlparse
+from typing import Any
 
+import httpx
 
 logger = logging.getLogger(__name__)
 
 
 class SecureHTTPClient:
     """HTTP client with security checks."""
-    
+
     def __init__(self, timeout: float = 10.0, max_redirects: int = 3) -> None:
         """Initialize HTTP client."""
         self.timeout = timeout
         self.max_redirects = max_redirects
-    
+
     async def get(
         self,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         allow_redirects: bool = True,
-    ) -> tuple[Optional[httpx.Response], Optional[str]]:
+    ) -> tuple[httpx.Response | None, str | None]:
         """
         Make GET request.
-        
+
         Returns (response, error_message)
         """
         try:
@@ -41,12 +40,12 @@ class SecureHTTPClient:
             return None, "Connection failed"
         except Exception as e:
             return None, f"Request error: {e}"
-    
+
     async def head(
         self,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
-    ) -> tuple[Optional[httpx.Response], Optional[str]]:
+        headers: dict[str, str] | None = None,
+    ) -> tuple[httpx.Response | None, str | None]:
         """Make HEAD request."""
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -54,13 +53,13 @@ class SecureHTTPClient:
                 return response, None
         except Exception as e:
             return None, f"HEAD request error: {e}"
-    
+
     async def post(
         self,
         url: str,
-        data: Optional[Dict] = None,
-        headers: Optional[Dict[str, str]] = None,
-    ) -> tuple[Optional[httpx.Response], Optional[str]]:
+        data: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> tuple[httpx.Response | None, str | None]:
         """Make POST request."""
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -68,7 +67,7 @@ class SecureHTTPClient:
                 return response, None
         except Exception as e:
             return None, f"POST request error: {e}"
-    
+
     def get_supported_methods(self, allowed_methods: str) -> list[str]:
         """Parse allowed methods from header."""
         return [m.strip() for m in allowed_methods.split(",")]

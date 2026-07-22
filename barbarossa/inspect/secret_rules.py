@@ -1,10 +1,10 @@
 """Secret detection rules."""
 
 import re
-from typing import Generator
-from barbarossa.models import Finding, Severity, Confidence, Category
-from barbarossa.utils.redaction import redact_value
+from collections.abc import Generator
 
+from barbarossa.models import Category, Confidence, Finding, Severity
+from barbarossa.utils.redaction import redact_value
 
 # Common secret patterns
 PATTERNS = {
@@ -41,30 +41,30 @@ PATTERNS = {
 
 def detect_secrets(file_path: str, content: str, max_lines: int = 1000) -> Generator[Finding, None, None]:
     """Detect hardcoded secrets in file content."""
-    
+
     # Skip large files
     lines = content.split("\n")
     if len(lines) > max_lines:
         return
-    
+
     for pattern_name, config in PATTERNS.items():
         pattern = config["pattern"]
         confidence = config["confidence"]
-        
+
         for match_obj in re.finditer(pattern, content, re.IGNORECASE | re.MULTILINE):
             # Get line number
             line_num = content[:match_obj.start()].count("\n") + 1
-            
+
             # Get the matched text
             matched = match_obj.group(0)
             redacted = redact_value(matched)
-            
+
             yield Finding(
                 id=f"SECRET_{pattern_name}",
                 title=f"Hardcoded secret: {pattern_name}",
                 category=Category.SECRETS,
                 severity=Severity.CRITICAL,
-                confidence=confidence,
+                confidence=Confidence(confidence),
                 description=f"Potential {pattern_name} detected in source code.",
                 evidence=redacted,
                 file_path=file_path,
@@ -76,18 +76,18 @@ def detect_secrets(file_path: str, content: str, max_lines: int = 1000) -> Gener
 
 def detect_weak_crypto(file_path: str, content: str) -> Generator[Finding, None, None]:
     """Detect weak cryptographic practices."""
-    
+
     weak_crypto_patterns = {
         "MD5": (r"md5\(", r"hashlib\.md5"),
         "SHA1": (r"sha1\(", r"hashlib\.sha1"),
         "DES": (r"DES\.new", r"DES3\.new"),
     }
-    
+
     for crypto_name, patterns in weak_crypto_patterns.items():
         for pattern in patterns:
             for match_obj in re.finditer(pattern, content, re.IGNORECASE):
                 line_num = content[:match_obj.start()].count("\n") + 1
-                
+
                 yield Finding(
                     id=f"WEAK_CRYPTO_{crypto_name}",
                     title=f"Weak cryptography: {crypto_name}",
@@ -105,18 +105,18 @@ def detect_weak_crypto(file_path: str, content: str) -> Generator[Finding, None,
 
 def detect_debug_mode(file_path: str, content: str) -> Generator[Finding, None, None]:
     """Detect debug mode enabled in production."""
-    
+
     debug_patterns = {
         "FLASK_DEBUG": r"(?i)debug\s*=\s*True",
         "DJANGO_DEBUG": r"DEBUG\s*=\s*True",
         "CONSOLE_LOG": r"console\.log\(",
         "PRINT_STATEMENTS": r"print\(",
     }
-    
+
     for pattern_name, pattern in debug_patterns.items():
         for match_obj in re.finditer(pattern, content):
             line_num = content[:match_obj.start()].count("\n") + 1
-            
+
             yield Finding(
                 id=f"DEBUG_{pattern_name}",
                 title=f"Debug mode enabled: {pattern_name}",

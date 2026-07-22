@@ -1,14 +1,14 @@
 """JSON reporter for findings."""
 
 import json
-from datetime import datetime
 from pathlib import Path
-from barbarossa.models import ScanResult
+
+from barbarossa.models import ScanResult, Severity
 
 
 class JSONReporter:
     """Report findings as JSON."""
-    
+
     def report(self, result: ScanResult, output_path: Path) -> None:
         """Generate JSON report."""
         data = {
@@ -26,10 +26,10 @@ class JSONReporter:
             "summary": {
                 "total_findings": len(result.findings),
                 "critical": len(result.critical_findings),
-                "high": len(result.get_findings_by_severity("HIGH")),
-                "medium": len(result.get_findings_by_severity("MEDIUM")),
-                "low": len(result.get_findings_by_severity("LOW")),
-                "info": len(result.get_findings_by_severity("INFO")),
+                "high": len(result.get_findings_by_severity(Severity.HIGH)),
+                "medium": len(result.get_findings_by_severity(Severity.MEDIUM)),
+                "low": len(result.get_findings_by_severity(Severity.LOW)),
+                "info": len(result.get_findings_by_severity(Severity.INFO)),
                 "total_requests": result.total_requests,
             },
             "findings": [
@@ -50,5 +50,5 @@ class JSONReporter:
                 for f in result.sorted_findings
             ],
         }
-        
+
         output_path.write_text(json.dumps(data, indent=2))

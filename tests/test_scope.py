@@ -1,13 +1,12 @@
 """Tests for scope validation."""
 
-import pytest
 from barbarossa.scope import (
+    is_blocked_hostname,
+    is_blocked_ip,
     is_localhost,
     is_private_ip,
-    is_blocked_ip,
-    is_blocked_hostname,
-    validate_target_url,
     validate_redirect,
+    validate_target_url,
 )
 
 

@@ -28,7 +28,7 @@ def test_rate_limiter_errors() -> None:
     """Test error tracking."""
     limiter = RateLimiter(max_consecutive_errors=3)
     assert not limiter.has_too_many_errors()
-    
+
     limiter.increment_error()
     limiter.increment_error()
     limiter.increment_error()
@@ -40,6 +40,6 @@ def test_rate_limiter_reset_on_success() -> None:
     limiter = RateLimiter()
     limiter.increment_error()
     assert limiter.consecutive_errors == 1
-    
+
     limiter.increment_request()
     assert limiter.consecutive_errors == 0

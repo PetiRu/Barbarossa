@@ -2,12 +2,14 @@
 
 import json
 from pathlib import Path
+from typing import Any
+
 from barbarossa.models import ScanResult
 
 
 class SARIFReporter:
     """Report findings in SARIF format for GitHub integration."""
-    
+
     def report(self, result: ScanResult, output_path: Path) -> None:
         """Generate SARIF report."""
         # Map BARBAROSSA severity to SARIF level
@@ -18,10 +20,10 @@ class SARIFReporter:
             "LOW": "note",
             "INFO": "note",
         }
-        
+
         rules = {}
         results = []
-        
+
         for finding in result.sorted_findings:
             # Create rule
             if finding.id not in rules:
@@ -34,15 +36,15 @@ class SARIFReporter:
                         "level": severity_map.get(finding.severity.value, "warning"),
                     },
                 }
-            
+
             # Create result
-            result_entry: dict = {
+            result_entry: dict[str, Any] = {
                 "ruleId": finding.id,
                 "level": severity_map.get(finding.severity.value, "warning"),
                 "message": {"text": finding.description},
                 "locations": [],
             }
-            
+
             # Add location if available
             if finding.file_path:
                 result_entry["locations"].append({
@@ -59,9 +61,9 @@ class SARIFReporter:
                         "name": finding.endpoint,
                     }]
                 })
-            
+
             results.append(result_entry)
-        
+
         # Build SARIF document
         sarif = {
             "version": "2.1.0",
@@ -85,5 +87,5 @@ class SARIFReporter:
                 }
             ]
         }
-        
+
         output_path.write_text(json.dumps(sarif, indent=2))

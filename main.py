@@ -6,9 +6,8 @@ Deterministic | Non-destructive | Authorized-only
 Configuration: Customize these settings before running.
 """
 
-import sys
 import asyncio
-from pathlib import Path
+import sys
 
 # ============================================================================
 # CONFIGURATION SECTION
@@ -52,7 +51,7 @@ VERBOSE = False
 async def main() -> int:
     """Main entry point."""
     from barbarossa.cli import app
-    
+
     try:
         app()
         return 0

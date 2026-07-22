@@ -12,9 +12,9 @@ def print_banner() -> None:
     ██╔══██╗██╔══██║██╔══██╗██╔══██╗██╔══██║██╔══██╗██║   ██║╚════██║╚════██║██╔══██║
     ██████╔╝██║  ██║██║  ██║██████╔╝██║  ██║██║  ██║╚██████╔╝███████║███████║██║  ██║
     ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝
-    
+
                                INSPECT. PROBE. FORTIFY.
-    
+
                     Deterministic Web Application Security Testing
                          Non-destructive | Authorization-first
     """

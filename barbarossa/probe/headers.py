@@ -1,18 +1,18 @@
 """Security header checks for probes."""
 
-import re
-from typing import Optional, Generator
-from barbarossa.models import Finding, Severity, Confidence, Category
+from collections.abc import Generator
+
+from barbarossa.models import Category, Confidence, Finding, Severity
 
 
 def check_security_headers(
     url: str,
-    headers: dict,
+    headers: dict[str, str],
 ) -> Generator[Finding, None, None]:
     """Check for missing or weak security headers."""
-    
+
     headers_lower = {k.lower(): v for k, v in headers.items()}
-    
+
     # HSTS check
     if "strict-transport-security" not in headers_lower:
         yield Finding(
@@ -27,7 +27,7 @@ def check_security_headers(
             recommendation='Add: Strict-Transport-Security: max-age=31536000; includeSubDomains',
             references=["https://owasp.org/www-community/attacks/HSTS"],
         )
-    
+
     # CSP check
     if "content-security-policy" not in headers_lower:
         yield Finding(
@@ -42,7 +42,7 @@ def check_security_headers(
             recommendation="Implement Content-Security-Policy header",
             references=["https://owasp.org/www-community/attacks/xss/"],
         )
-    
+
     # X-Content-Type-Options check
     if "x-content-type-options" not in headers_lower:
         yield Finding(
@@ -57,7 +57,7 @@ def check_security_headers(
             recommendation="Add: X-Content-Type-Options: nosniff",
             references=["https://owasp.org/www-community/MIME_sniffing"],
         )
-    
+
     # X-Frame-Options check
     if "x-frame-options" not in headers_lower:
         yield Finding(
@@ -72,7 +72,7 @@ def check_security_headers(
             recommendation="Add: X-Frame-Options: DENY or SAMEORIGIN",
             references=["https://owasp.org/www-community/attacks/Clickjacking"],
         )
-    
+
     # Referrer-Policy check
     if "referrer-policy" not in headers_lower:
         yield Finding(
@@ -87,7 +87,7 @@ def check_security_headers(
             recommendation="Add: Referrer-Policy: strict-origin-when-cross-origin",
             references=["https://owasp.org/www-community/attacks/Referrer_Spoofing"],
         )
-    
+
     # Permissions-Policy check
     if "permissions-policy" not in headers_lower and "feature-policy" not in headers_lower:
         yield Finding(
@@ -102,7 +102,7 @@ def check_security_headers(
             recommendation="Add: Permissions-Policy: geolocation=(), microphone=(), camera=()",
             references=["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy"],
         )
-    
+
     # Check CSP strength
     if "content-security-policy" in headers_lower:
         csp = headers_lower["content-security-policy"]
@@ -119,7 +119,7 @@ def check_security_headers(
                 recommendation="Remove unsafe-inline and unsafe-eval from CSP",
                 references=["https://owasp.org/www-community/attacks/xss/"],
             )
-    
+
     # Check X-Frame-Options strength
     if "x-frame-options" in headers_lower:
         xfo = headers_lower["x-frame-options"].upper()

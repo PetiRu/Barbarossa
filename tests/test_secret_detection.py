@@ -1,6 +1,6 @@
 """Tests for secret detection."""
 
-from barbarossa.inspect.secret_rules import detect_secrets, detect_weak_crypto, detect_debug_mode
+from barbarossa.inspect.secret_rules import detect_debug_mode, detect_secrets, detect_weak_crypto
 
 
 def test_detect_aws_key() -> None:

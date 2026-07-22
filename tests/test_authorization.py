@@ -1,7 +1,8 @@
 """Tests for authorization."""
 
 import os
-from barbarossa.authorization import get_authorization_from_env, check_authorization
+
+from barbarossa.authorization import check_authorization, get_authorization_from_env
 
 
 def test_env_auth_enabled(monkeypatch) -> None:  # type: ignore

@@ -1,12 +1,11 @@
 """Secure demo application for testing BARBAROSSA."""
 
+import sqlite3
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from starlette.middleware import Middleware
-import sqlite3
-from pathlib import Path
-from typing import Optional
 
 app = FastAPI(
     title="Secure Demo App",
@@ -61,7 +60,7 @@ def get_user(user_id: int) -> dict:
     """Get user info with proper validation and no data exposure."""
     if user_id < 1:
         raise HTTPException(status_code=400, detail="Invalid user ID")
-    
+
     return {
         "id": user_id,
         "status": "found"
@@ -73,7 +72,7 @@ def search(query: str = "") -> dict:
     """Search with parameterized queries."""
     if len(query) > 100:
         raise HTTPException(status_code=400, detail="Query too long")
-    
+
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -81,7 +80,7 @@ def search(query: str = "") -> dict:
     c.execute("SELECT id FROM users WHERE username LIKE ?", (f"%{query}%",))
     results = [dict(row) for row in c.fetchall()]
     conn.close()
-    
+
     return {"results": results}
 
 

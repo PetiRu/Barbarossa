@@ -1,9 +1,10 @@
 """Vulnerable demo application for testing BARBAROSSA."""
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
 import sqlite3
 from pathlib import Path
+
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 
 app = FastAPI(
     title="Vulnerable Demo App",
@@ -91,7 +92,7 @@ def login(username: str, password: str) -> dict:
     c.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
     user = c.fetchone()
     conn.close()
-    
+
     if user:
         return {
             "status": "success",

@@ -1,9 +1,7 @@
 """Utilities for secret redaction and hashing."""
 
-import re
 import hashlib
-from typing import Optional
-
+import re
 
 # Patterns for common secrets
 SECRET_PATTERNS = {
@@ -18,46 +16,46 @@ SECRET_PATTERNS = {
 def redact_value(value: str, visible_chars: int = 3) -> str:
     """
     Redact a value, showing only first few characters.
-    
+
     Args:
         value: The value to redact
         visible_chars: How many characters to show
-    
+
     Returns:
         Redacted value like "abc***" (3 chars + asterisks)
     """
     if len(value) <= visible_chars:
         return "*" * len(value)
-    
+
     return value[:visible_chars] + "*" * (len(value) - visible_chars)
 
 
 def redact_evidence(evidence: str, max_length: int = 200) -> str:
     """
     Redact sensitive data from evidence string.
-    
+
     Removes or masks:
     - API keys
     - Tokens
     - Passwords
     - Private keys
-    
+
     Args:
         evidence: The evidence string to redact
         max_length: Maximum length of returned evidence
-    
+
     Returns:
         Redacted evidence string
     """
     result = evidence
-    
+
     # Mask API keys
     result = re.sub(
         r"AKIA[0-9A-Z]{16}",
         "AKIA" + "*" * 16,
         result
     )
-    
+
     # Mask private keys
     result = re.sub(
         r"-----BEGIN (?:RSA|DSA|EC) PRIVATE KEY-----.*?-----END (?:RSA|DSA|EC) PRIVATE KEY-----",
@@ -65,25 +63,25 @@ def redact_evidence(evidence: str, max_length: int = 200) -> str:
         result,
         flags=re.DOTALL
     )
-    
+
     # Mask JWT tokens
     result = re.sub(
         r"eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+",
         "[JWT REDACTED]",
         result
     )
-    
+
     # Mask authorization headers
     result = re.sub(
         r"(?i)(authorization|x-api-key)\s*[:=]\s*([^\s,;\"']+)",
         lambda m: f"{m.group(1)}: {'*' * len(m.group(2))}",
         result
     )
-    
+
     # Truncate if needed
     if len(result) > max_length:
         result = result[:max_length] + "..."
-    
+
     return result
 
 
@@ -95,15 +93,15 @@ def hash_sensitive_data(data: str) -> str:
 def find_secret_patterns(content: str) -> list[tuple[str, str]]:
     """
     Find potential secrets in content.
-    
+
     Args:
         content: Text to search for secrets
-    
+
     Returns:
         List of (pattern_name, match) tuples
     """
     findings = []
-    
+
     for pattern_name, pattern in SECRET_PATTERNS.items():
         matches = re.findall(pattern, content, re.IGNORECASE | re.MULTILINE)
         for match in matches:
@@ -111,5 +109,5 @@ def find_secret_patterns(content: str) -> list[tuple[str, str]]:
                 findings.append((pattern_name, match[0]))
             else:
                 findings.append((pattern_name, match))
-    
+
     return findings

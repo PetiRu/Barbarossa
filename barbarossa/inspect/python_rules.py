@@ -1,14 +1,15 @@
 """Python-specific security rules."""
 
 import ast
-from typing import Generator
-from barbarossa.models import Finding, Severity, Confidence, Category
+from collections.abc import Generator
+
+from barbarossa.models import Category, Confidence, Finding, Severity
 
 
 def check_eval_usage(tree: ast.AST, file_path: str) -> Generator[Finding, None, None]:
     """Detect eval() and exec() usage."""
     dangerous_funcs = {"eval", "exec", "compile"}
-    
+
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
             if isinstance(node.func, ast.Name) and node.func.id in dangerous_funcs:
@@ -32,8 +33,8 @@ def check_pickle_usage(tree: ast.AST, file_path: str) -> Generator[Finding, None
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
             if isinstance(node.func, ast.Attribute):
-                if (isinstance(node.func.value, ast.Name) and 
-                    node.func.value.id == "pickle" and 
+                if (isinstance(node.func.value, ast.Name) and
+                    node.func.value.id == "pickle" and
                     node.func.attr in ("loads", "load")):
                     yield Finding(
                         id="PYTHON_INSECURE_DESERIALIZATION",
@@ -103,13 +104,13 @@ def analyze_python_file(file_path: str, content: str) -> Generator[Finding, None
     """Analyze Python file for security issues."""
     try:
         tree = ast.parse(content)
-        
+
         # Run all checks
         yield from check_eval_usage(tree, file_path)
         yield from check_pickle_usage(tree, file_path)
         yield from check_sql_string_formatting(tree, file_path)
         yield from check_subprocess_usage(tree, file_path)
-        
+
     except SyntaxError:
         # Skip files with syntax errors
         pass

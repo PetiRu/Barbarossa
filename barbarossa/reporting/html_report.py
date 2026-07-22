@@ -1,9 +1,10 @@
 """HTML reporter for findings."""
 
 from pathlib import Path
-from jinja2 import Template
-from barbarossa.models import ScanResult, Severity
 
+from jinja2 import Template
+
+from barbarossa.models import ScanResult, Severity
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html>
@@ -184,13 +185,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <h1>BARBAROSSA</h1>
             <p class="tagline">Inspect. Probe. Fortify.</p>
         </div>
-        
+
         <div class="content">
             <div class="warning">
                 <strong>⚠️ Disclaimer:</strong> BARBAROSSA reports security indicators and potential weaknesses.
                 A finding does not automatically prove exploitability. Manual verification is required.
             </div>
-            
+
             <div class="section">
                 <h2>Scan Summary</h2>
                 <div class="summary-grid">
@@ -211,7 +212,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                         <div class="value" style="color: #4488ff;">{{ summary.medium }}</div>
                     </div>
                 </div>
-                
+
                 <div class="stats">
                     <div class="stat">
                         <div class="stat-value">{{ duration }}</div>
@@ -227,7 +228,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     </div>
                 </div>
             </div>
-            
+
             {% if target %}
             <div class="section">
                 <h2>Target Information</h2>
@@ -235,14 +236,14 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 <p><strong>Authorized:</strong> {{ 'Yes' if authorized else 'No' }}</p>
             </div>
             {% endif %}
-            
+
             {% if source %}
             <div class="section">
                 <h2>Source Directory</h2>
                 <p>{{ source }}</p>
             </div>
             {% endif %}
-            
+
             <div class="section">
                 <h2>Findings</h2>
                 {% if findings %}
@@ -284,7 +285,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 {% endif %}
             </div>
         </div>
-        
+
         <div class="footer">
             <p>BARBAROSSA v0.1.0 | Deterministic Web Application Security Testing</p>
             <p>Generated on {{ scan_date }} | Duration: {{ duration }}s</p>
@@ -297,11 +298,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 class HTMLReporter:
     """Report findings as HTML."""
-    
+
     def report(self, result: ScanResult, output_path: Path) -> None:
         """Generate HTML report."""
         template = Template(HTML_TEMPLATE)
-        
+
         findings_data = []
         for finding in result.sorted_findings:
             findings_data.append({
@@ -317,7 +318,7 @@ class HTMLReporter:
                 "endpoint": finding.endpoint,
                 "recommendation": finding.recommendation,
             })
-        
+
         context = {
             "summary": {
                 "total": len(result.findings),
@@ -335,6 +336,6 @@ class HTMLReporter:
             "duration": round(result.duration_seconds, 1),
             "total_requests": result.total_requests,
         }
-        
+
         html_content = template.render(**context)
         output_path.write_text(html_content)
