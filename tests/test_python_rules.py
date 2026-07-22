@@ -21,13 +21,33 @@ def test_detect_sql_formatting() -> None:
     """Test SQL string formatting detection."""
     code = "query = 'SELECT * FROM users WHERE id = %s' % user_id"
     findings = list(analyze_python_file("test.py", code))
-    # May not detect due to string literal heuristics
-    assert isinstance(findings, list)
+    assert any(f.id == "PYTHON_SQL_INJECTION" for f in findings)
+
+
+def test_detect_sql_f_string() -> None:
+    """Test SQL injection detection in an f-string."""
+    code = "query = f\"SELECT * FROM users WHERE name = '{username}'\""
+    findings = list(analyze_python_file("test.py", code))
+    assert any(f.id == "PYTHON_SQL_INJECTION" for f in findings)
+
+
+def test_detect_sql_dot_format() -> None:
+    """Test SQL injection detection with str.format()."""
+    code = 'query = "DELETE FROM users WHERE id = {}".format(user_id)'
+    findings = list(analyze_python_file("test.py", code))
+    assert any(f.id == "PYTHON_SQL_INJECTION" for f in findings)
+
+
+def test_detect_sql_concatenation() -> None:
+    """Test SQL injection detection with concatenation."""
+    code = 'query = "SELECT * FROM users WHERE name = " + username'
+    findings = list(analyze_python_file("test.py", code))
+    assert any(f.id == "PYTHON_SQL_INJECTION" for f in findings)
 
 
 def test_detect_subprocess_shell() -> None:
     """Test subprocess with shell=True detection."""
-    code = 'subprocess.call(command, shell=True)'
+    code = "subprocess.call(command, shell=True)"
     findings = list(analyze_python_file("test.py", code))
     assert any(f.id == "PYTHON_SHELL_INJECTION" for f in findings)
 

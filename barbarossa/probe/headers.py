@@ -24,7 +24,7 @@ def check_security_headers(
             description="HSTS header forces HTTPS and prevents protocol downgrade attacks.",
             evidence="Header not found",
             endpoint=url,
-            recommendation='Add: Strict-Transport-Security: max-age=31536000; includeSubDomains',
+            recommendation="Add: Strict-Transport-Security: max-age=31536000; includeSubDomains",
             references=["https://owasp.org/www-community/attacks/HSTS"],
         )
 
@@ -100,7 +100,9 @@ def check_security_headers(
             evidence="Header not found",
             endpoint=url,
             recommendation="Add: Permissions-Policy: geolocation=(), microphone=(), camera=()",
-            references=["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy"],
+            references=[
+                "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy"
+            ],
         )
 
     # Check CSP strength

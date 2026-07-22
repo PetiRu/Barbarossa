@@ -69,7 +69,9 @@ def check_docker_security(file_path: str, content: str) -> Generator[Finding, No
             )
 
         # Check for secrets in ENV
-        if "ENV" in stripped and any(k in stripped.upper() for k in ["PASSWORD", "SECRET", "KEY", "TOKEN"]):
+        if "ENV" in stripped and any(
+            k in stripped.upper() for k in ["PASSWORD", "SECRET", "KEY", "TOKEN"]
+        ):
             yield Finding(
                 id="DOCKER_HARDCODED_SECRET",
                 title="Hardcoded secret in Dockerfile",
@@ -100,7 +102,9 @@ def check_json_config(file_path: str, content: str) -> Generator[Finding, None, 
 
             # Check for sensitive values
             if isinstance(key, str):
-                if any(k in key.lower() for k in ["password", "secret", "token", "key", "credential"]):
+                if any(
+                    k in key.lower() for k in ["password", "secret", "token", "key", "credential"]
+                ):
                     if isinstance(value, str) and len(value) > 5:
                         yield Finding(
                             id="JSON_HARDCODED_SECRET",

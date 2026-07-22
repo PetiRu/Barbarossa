@@ -22,25 +22,22 @@ Analyze source code for security vulnerabilities using deterministic rules:
 
 ### Stage 2: Active Probes (PROBE)
 Perform non-destructive HTTP security checks on authorized targets:
-* **Transport Security**: Validation of TLS configuration and HTTPS enforcement.
+* **Transport Security**: Validation of HTTPS availability and enforcement indicators.
 * **Security Headers**: Verification of CSP, HSTS, X-Content-Type-Options, and other critical headers.
-* **Session Management**: Inspection of cookie flags (Secure, HttpOnly, SameSite) and CSRF protection.
-* **Input Reflection**: Safe testing for XSS and SQL injection indicators.
-* **Environment Checks**: Detection of directory listing, exposed files, and verbose error messages.
+* **Environment Checks**: Detection of directory listing and common exposed files/endpoints.
 * **Resource Respect**: Configurable rate-limiting (default: 2 req/sec) to prevent service disruption.
 
 ### Reporting
 Generate comprehensive reports in multiple formats:
 * **Console**: Real-time findings with structured output.
 * **JSON**: Structured data for automated pipeline integration.
-* **HTML**: Visual reports with charts and detailed findings.
+* **HTML**: Visual reports with a summary and detailed findings.
 * **SARIF**: GitHub-compatible security format for integration with GitHub Advanced Security.
 
 ### Educational Mode
 A dedicated mode for security students that explains:
-* The purpose and mechanism of each test.
-* Expected results and common pitfalls.
-* Remediation strategies and exercises.
+* Why each reported indicator matters.
+* The recommended remediation for each finding.
 
 ## Security and Design Principles
 
@@ -53,7 +50,7 @@ A dedicated mode for security students that explains:
 ## Installation
 
 ### Requirements
-* Python 3.12+
+* Python 3.11+
 * pip or uv
 
 ### From Source
@@ -98,9 +95,17 @@ barbarossa probe [TARGET_URL] --authorized
 # Run full inspection and probes
 barbarossa scan --source [DIR] --target [URL] --authorized
 
+# Load source, target, scope, limits, features, and reports from TOML
+barbarossa scan --config config.toml --authorized
+
 # Learning mode for educational purposes
 barbarossa probe [URL] --learning-mode
 ```
+
+`--authorized` confirms consent; it never bypasses scope validation. Public hosts must also be
+listed with `--allowlist`. Internal DNS names require an explicit `private:hostname` allowlist
+entry. Every resolved IP is validated and pinned to the outbound connection, and every redirect
+is checked again before a request is sent.
 
 ### Help and Version
 To see the full list of options and commands:

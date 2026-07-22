@@ -14,12 +14,15 @@ logger = logging.getLogger(__name__)
 class ProbeRunner:
     """Run active HTTP security probes."""
 
-    def __init__(self, rate_limiter: RateLimiter) -> None:
+    def __init__(
+        self, rate_limiter: RateLimiter, authorized_targets: list[str] | None = None
+    ) -> None:
         """Initialize probe runner."""
         self.rate_limiter = rate_limiter
         self.client = SecureHTTPClient(
             timeout=rate_limiter.request_timeout_seconds,
             max_redirects=rate_limiter.max_redirects,
+            authorized_targets=authorized_targets,
         )
         self.findings: list[Finding] = []
 
@@ -31,14 +34,20 @@ class ProbeRunner:
         # Check HTTPS availability
         async for finding in self._check_https_redirect(url):
             yield finding
+        if self.rate_limiter.should_stop():
+            return
 
         # Check security headers
         async for finding in self._check_headers(url):
             yield finding
+        if self.rate_limiter.should_stop():
+            return
 
         # Check common exposed files
         async for finding in self._check_exposed_files(url):
             yield finding
+        if self.rate_limiter.should_stop():
+            return
 
         # Check for directory listing
         async for finding in self._check_directory_listing(url):
@@ -46,7 +55,7 @@ class ProbeRunner:
 
     async def _check_https_redirect(self, url: str) -> AsyncGenerator[Finding, None]:
         """Check for HTTPS and HTTP to HTTPS redirect."""
-        if not url.startswith("http://"):
+        if self.rate_limiter.should_stop() or not url.startswith("http://"):
             return
 
         https_url = url.replace("http://", "https://", 1)
@@ -54,8 +63,10 @@ class ProbeRunner:
         self.rate_limiter.wait_if_needed()
         response, error = await self.client.head(https_url)
         self.rate_limiter.increment_request()
+        if error:
+            self.rate_limiter.increment_error()
 
-        if response and response.status_code < 400:
+        if response is not None and response.status_code < 400:
             # HTTPS is available
             pass
         else:
@@ -74,15 +85,18 @@ class ProbeRunner:
 
     async def _check_headers(self, url: str) -> AsyncGenerator[Finding, None]:
         """Check security headers on response."""
+        if self.rate_limiter.should_stop():
+            return
         self.rate_limiter.wait_if_needed()
         response, error = await self.client.get(url)
         self.rate_limiter.increment_request()
 
         if error:
+            self.rate_limiter.increment_error()
             logger.debug(f"Error getting headers from {url}: {error}")
             return
 
-        if response:
+        if response is not None:
             for finding in check_security_headers(url, dict(response.headers)):
                 yield finding
 
@@ -96,6 +110,7 @@ class ProbeRunner:
             "/.well-known/security.txt",
             "/debug",
             "/admin",
+            "/config",
         ]
 
         base_url = url.rstrip("/")
@@ -109,12 +124,28 @@ class ProbeRunner:
             response, error = await self.client.head(test_url)
             self.rate_limiter.increment_request()
 
-            if response and response.status_code == 200:
+            if error:
+                self.rate_limiter.increment_error()
+                continue
+
+            if response is not None and response.status_code == 405:
+                if self.rate_limiter.should_stop():
+                    break
+                self.rate_limiter.wait_if_needed()
+                response, error = await self.client.get(test_url)
+                self.rate_limiter.increment_request()
+                if error:
+                    self.rate_limiter.increment_error()
+                    continue
+
+            if response is not None and response.status_code == 200:
                 yield Finding(
                     id="EXPOSED_FILE",
                     title=f"Exposed file found: {file_path}",
                     category=Category.INFORMATION_DISCLOSURE,
-                    severity=Severity.MEDIUM if ".git" in file_path or ".env" in file_path else Severity.LOW,
+                    severity=Severity.MEDIUM
+                    if ".git" in file_path or ".env" in file_path
+                    else Severity.LOW,
                     confidence=Confidence.HIGH,
                     description=f"File {file_path} is publicly accessible.",
                     evidence=test_url,
@@ -125,18 +156,27 @@ class ProbeRunner:
 
     async def _check_directory_listing(self, url: str) -> AsyncGenerator[Finding, None]:
         """Check if directory listing is enabled."""
+        if self.rate_limiter.should_stop():
+            return
         self.rate_limiter.wait_if_needed()
         response, error = await self.client.get(url)
         self.rate_limiter.increment_request()
 
-        if response and response.text:
+        if error:
+            self.rate_limiter.increment_error()
+            return
+
+        if response is not None and response.text:
             # Simple heuristics for directory listing
-            if any(indicator in response.text for indicator in [
-                "<Directory>",
-                "Index of /",
-                "Parent Directory",
-                "[PARENTDIR]",
-            ]):
+            if any(
+                indicator in response.text
+                for indicator in [
+                    "<Directory>",
+                    "Index of /",
+                    "Parent Directory",
+                    "[PARENTDIR]",
+                ]
+            ):
                 yield Finding(
                     id="DIRECTORY_LISTING",
                     title="Directory listing is enabled",

@@ -18,7 +18,7 @@ def detect_js_secrets(file_path: str, content: str) -> Generator[Finding, None, 
 
     for pattern_name, pattern in patterns.items():
         for match_obj in re.finditer(pattern, content, re.IGNORECASE):
-            line_num = content[:match_obj.start()].count("\n") + 1
+            line_num = content[: match_obj.start()].count("\n") + 1
 
             yield Finding(
                 id=f"JS_SECRET_{pattern_name}",
@@ -47,7 +47,7 @@ def detect_js_unsafe_dom(file_path: str, content: str) -> Generator[Finding, Non
 
     for method, pattern in unsafe_methods.items():
         for match_obj in re.finditer(pattern, content):
-            line_num = content[:match_obj.start()].count("\n") + 1
+            line_num = content[: match_obj.start()].count("\n") + 1
 
             yield Finding(
                 id=f"JS_UNSAFE_{method.upper()}",
@@ -73,13 +73,13 @@ def detect_js_dangerous_libs(file_path: str, content: str) -> Generator[Finding,
     }
 
     for lib, recommendation in dangerous.items():
-        if re.search(rf"import.*from\s+['\"]({lib})['\"]", content) or \
-           re.search(rf"require\s*\(\s*['\"]({lib})['\"]", content):
-
+        if re.search(rf"import.*from\s+['\"]({lib})['\"]", content) or re.search(
+            rf"require\s*\(\s*['\"]({lib})['\"]", content
+        ):
             line_num = 1
             match = re.search(rf"({lib})", content)
             if match:
-                line_num = content[:match.start()].count("\n") + 1
+                line_num = content[: match.start()].count("\n") + 1
 
             yield Finding(
                 id=f"JS_LIB_{lib.upper()}",
@@ -106,7 +106,7 @@ def detect_js_xss_patterns(file_path: str, content: str) -> Generator[Finding, N
 
     for pattern_name, pattern in xss_patterns.items():
         for match_obj in re.finditer(pattern, content, re.IGNORECASE):
-            line_num = content[:match_obj.start()].count("\n") + 1
+            line_num = content[: match_obj.start()].count("\n") + 1
 
             yield Finding(
                 id=f"JS_XSS_{pattern_name.upper()}",

@@ -50,32 +50,34 @@ def redact_evidence(evidence: str, max_length: int = 200) -> str:
     result = evidence
 
     # Mask API keys
-    result = re.sub(
-        r"AKIA[0-9A-Z]{16}",
-        "AKIA" + "*" * 16,
-        result
-    )
+    result = re.sub(r"AKIA[0-9A-Z]{16}", "AKIA" + "*" * 16, result)
 
     # Mask private keys
     result = re.sub(
         r"-----BEGIN (?:RSA|DSA|EC) PRIVATE KEY-----.*?-----END (?:RSA|DSA|EC) PRIVATE KEY-----",
         "[PRIVATE KEY REDACTED]",
         result,
-        flags=re.DOTALL
+        flags=re.DOTALL,
     )
 
     # Mask JWT tokens
     result = re.sub(
-        r"eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+",
-        "[JWT REDACTED]",
-        result
+        r"eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", "[JWT REDACTED]", result
     )
 
     # Mask authorization headers
     result = re.sub(
         r"(?i)(authorization|x-api-key)\s*[:=]\s*([^\s,;\"']+)",
         lambda m: f"{m.group(1)}: {'*' * len(m.group(2))}",
-        result
+        result,
+    )
+
+    # Mask common assignment-style secrets while retaining the field name.
+    result = re.sub(
+        r"(?i)\b(api[_-]?key|secret(?:[_-]?key)?|password|passwd|pwd|token)\b"
+        r"(\s*[:=]\s*['\"]?)([^\s'\";,<>]{4,})",
+        lambda match: f"{match.group(1)}{match.group(2)}[REDACTED]",
+        result,
     )
 
     # Truncate if needed

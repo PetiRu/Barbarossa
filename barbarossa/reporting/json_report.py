@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 
 from barbarossa.models import ScanResult, Severity
+from barbarossa.utils.redaction import redact_evidence
+from barbarossa.utils.urls import sanitize_url_for_display
 
 
 class JSONReporter:
@@ -21,7 +23,7 @@ class JSONReporter:
                 "authorized": result.authorized,
                 "stopped": result.scan_stopped,
             },
-            "target": result.target_url,
+            "target": sanitize_url_for_display(result.target_url or "") or None,
             "source": result.source_directory,
             "summary": {
                 "total_findings": len(result.findings),
@@ -40,10 +42,10 @@ class JSONReporter:
                     "severity": f.severity.value,
                     "confidence": f.confidence.value,
                     "description": f.description,
-                    "evidence": f.evidence,
+                    "evidence": redact_evidence(f.evidence),
                     "file_path": f.file_path,
                     "line_number": f.line_number,
-                    "endpoint": f.endpoint,
+                    "endpoint": sanitize_url_for_display(f.endpoint or "") or None,
                     "recommendation": f.recommendation,
                     "references": f.references,
                 }
@@ -51,4 +53,4 @@ class JSONReporter:
             ],
         }
 
-        output_path.write_text(json.dumps(data, indent=2))
+        output_path.write_text(json.dumps(data, indent=2), encoding="utf-8")

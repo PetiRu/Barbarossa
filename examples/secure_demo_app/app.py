@@ -14,10 +14,7 @@ app = FastAPI(
 )
 
 # Security middleware
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.example.com"]
-)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "*.example.com"])
 
 app.add_middleware(
     CORSMiddleware,
@@ -61,10 +58,7 @@ def get_user(user_id: int) -> dict:
     if user_id < 1:
         raise HTTPException(status_code=400, detail="Invalid user ID")
 
-    return {
-        "id": user_id,
-        "status": "found"
-    }
+    return {"id": user_id, "status": "found"}
 
 
 @app.post("/api/search")
@@ -92,10 +86,11 @@ def robots_txt() -> str:
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         app,
-        host="127.0.0.1",
-        port=8001,
+        host="0.0.0.0",  # noqa: S104 - container listener
+        port=8000,
         ssl_keyfile=None,
         ssl_certfile=None,
     )

@@ -2,9 +2,11 @@
 
 from pathlib import Path
 
-from jinja2 import Template
+from jinja2 import Environment, select_autoescape
 
 from barbarossa.models import ScanResult, Severity
+from barbarossa.utils.redaction import redact_evidence
+from barbarossa.utils.urls import sanitize_url_for_display
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html>
@@ -302,23 +304,32 @@ class HTMLReporter:
 
     def report(self, result: ScanResult, output_path: Path) -> None:
         """Generate HTML report."""
-        template = Template(HTML_TEMPLATE)
+        environment = Environment(
+            autoescape=select_autoescape(
+                enabled_extensions=("html", "xml"),
+                default_for_string=True,
+                default=True,
+            )
+        )
+        template = environment.from_string(HTML_TEMPLATE)
 
         findings_data = []
         for finding in result.sorted_findings:
-            findings_data.append({
-                "id": finding.id,
-                "title": finding.title,
-                "category": finding.category.value,
-                "severity": finding.severity.value,
-                "confidence": finding.confidence.value,
-                "description": finding.description,
-                "evidence": finding.evidence,
-                "file_path": finding.file_path,
-                "line_number": finding.line_number,
-                "endpoint": finding.endpoint,
-                "recommendation": finding.recommendation,
-            })
+            findings_data.append(
+                {
+                    "id": finding.id,
+                    "title": finding.title,
+                    "category": finding.category.value,
+                    "severity": finding.severity.value,
+                    "confidence": finding.confidence.value,
+                    "description": finding.description,
+                    "evidence": redact_evidence(finding.evidence),
+                    "file_path": finding.file_path,
+                    "line_number": finding.line_number,
+                    "endpoint": sanitize_url_for_display(finding.endpoint or "") or None,
+                    "recommendation": finding.recommendation,
+                }
+            )
 
         context = {
             "summary": {
@@ -330,7 +341,7 @@ class HTMLReporter:
                 "info": len(result.get_findings_by_severity(Severity.INFO)),
             },
             "findings": findings_data,
-            "target": result.target_url,
+            "target": sanitize_url_for_display(result.target_url or "") or None,
             "source": result.source_directory,
             "authorized": result.authorized,
             "scan_date": result.start_time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -339,4 +350,4 @@ class HTMLReporter:
         }
 
         html_content = template.render(**context)
-        output_path.write_text(html_content)
+        output_path.write_text(html_content, encoding="utf-8")

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from barbarossa.models import ScanResult
+from barbarossa.utils.urls import sanitize_url_for_display
 
 
 class SARIFReporter:
@@ -47,20 +48,26 @@ class SARIFReporter:
 
             # Add location if available
             if finding.file_path:
-                result_entry["locations"].append({
-                    "physicalLocation": {
-                        "artifactLocation": {"uri": finding.file_path},
-                        "region": {
-                            "startLine": finding.line_number or 1,
+                result_entry["locations"].append(
+                    {
+                        "physicalLocation": {
+                            "artifactLocation": {"uri": finding.file_path},
+                            "region": {
+                                "startLine": finding.line_number or 1,
+                            },
                         }
                     }
-                })
+                )
             elif finding.endpoint:
-                result_entry["locations"].append({
-                    "logicalLocations": [{
-                        "name": finding.endpoint,
-                    }]
-                })
+                result_entry["locations"].append(
+                    {
+                        "logicalLocations": [
+                            {
+                                "name": sanitize_url_for_display(finding.endpoint),
+                            }
+                        ]
+                    }
+                )
 
             results.append(result_entry)
 
@@ -80,12 +87,16 @@ class SARIFReporter:
                     },
                     "results": results,
                     "properties": {
-                        "scanTarget": result.target_url or result.source_directory,
+                        "scanTarget": (
+                            sanitize_url_for_display(result.target_url)
+                            if result.target_url
+                            else result.source_directory
+                        ),
                         "scanDuration": result.duration_seconds,
                         "requestsCount": result.total_requests,
-                    }
+                    },
                 }
-            ]
+            ],
         }
 
-        output_path.write_text(json.dumps(sarif, indent=2))
+        output_path.write_text(json.dumps(sarif, indent=2), encoding="utf-8")

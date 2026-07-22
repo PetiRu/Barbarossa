@@ -12,7 +12,7 @@ All probes are designed to be safe and non-destructive:
 - Harmless testing values only
 - No modifications to target data
 - Respects rate limits
-- Stops on server errors
+- Stops after the configured number of consecutive request failures
 
 ## Probe Categories
 
@@ -34,28 +34,11 @@ Checks for missing or weak:
 - `Referrer-Policy`
 - `Permissions-Policy`
 
-### Cookie Security
-
-- `Secure` flag
-- `HttpOnly` flag
-- `SameSite` setting
-- Path restrictions
-- Domain restrictions
-
-### CORS Configuration
-
-- Origin validation
-- Credential exposure
-- Wildcard origin usage
-- Method restrictions
-
 ### Information Disclosure
 
 - Server version headers
-- Verbose error messages
 - Directory listing
-- Stack trace exposure
-- Debug endpoints
+- Common debug and configuration endpoints
 
 ### Common Exposed Files
 
@@ -66,14 +49,9 @@ Safe probes for publicly known sensitive files:
 - `/robots.txt`
 - `/sitemap.xml`
 - `/.well-known/security.txt`
-
-### Input Reflection
-
-Harmless markers detect:
-
-- XSS reflection (using unique tokens)
-- SQL error messages (using safe values)
-- Open redirects (using harmless markers)
+- `/debug`
+- `/admin`
+- `/config`
 
 ## Rate Limiting
 
@@ -142,21 +120,20 @@ BARBAROSSA safely follows redirects:
 
 ## Error Handling
 
-If too many errors occur, scanning pauses:
+If too many consecutive errors occur, scanning stops:
 
 ```
-3 consecutive server errors → Pause
+3 consecutive request errors → Stop
 Check your rate limits
-Resume after delay
 ```
 
 ## Performance
 
 Typical scan duration:
 
-- 50-150 endpoints
+- 11 base requests, plus GET fallbacks when a server rejects HEAD
 - 2 req/sec rate limit
-- 30-75 seconds to complete
+- Usually under 15 seconds on a responsive local target
 
 Adjust with `--requests-per-second` if needed.
 

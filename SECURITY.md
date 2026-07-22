@@ -4,7 +4,11 @@
 
 **Do not** open a public GitHub issue if you discover a security vulnerability.
 
-Instead, please email security@example.com with:
+Use GitHub's private vulnerability reporting flow:
+
+[Report a vulnerability privately](https://github.com/PetiRu/Barbarossa/security/advisories/new)
+
+Include:
 
 1. Description of the vulnerability
 2. Steps to reproduce (if applicable)
@@ -28,7 +32,7 @@ BARBAROSSA is designed with security-first principles:
 * **Deterministic**: No ML/LLM/probabilistic decisions
 * **Scope-enforced**: Strict allowlist and DNS rebinding protection
 * **Rate-limited**: Respects target resources
-* **Auditable**: Full request logging
+* **Auditable**: Structured findings and request counts in generated reports
 
 ## Known Limitations
 

@@ -12,6 +12,7 @@ from barbarossa.inspect.javascript_rules import (
 from barbarossa.inspect.python_rules import analyze_python_file
 from barbarossa.inspect.secret_rules import detect_debug_mode, detect_secrets, detect_weak_crypto
 from barbarossa.models import Finding
+from barbarossa.safety import is_stop_requested
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ class SecurityScanner:
     def __init__(self) -> None:
         """Initialize scanner."""
         self.findings: list[Finding] = []
+        self.stopped = False
 
     def scan_directory(self, directory: str) -> list[Finding]:
         """Scan directory for security issues."""
@@ -32,8 +34,13 @@ class SecurityScanner:
             return []
 
         self.findings = []
+        self.stopped = False
 
         for file_path in path.rglob("*"):
+            if is_stop_requested():
+                self.stopped = True
+                logger.warning("Emergency stop requested; static inspection stopped")
+                break
             if file_path.is_file():
                 self._scan_file(file_path)
 
@@ -69,6 +76,7 @@ class SecurityScanner:
             # Docker Compose
             elif file_path.name in ("docker-compose.yml", "docker-compose.yaml"):
                 from barbarossa.inspect.docker_rules import check_docker_compose_security
+
                 self.findings.extend(check_docker_compose_security(relative_path, content))
 
             # JSON files

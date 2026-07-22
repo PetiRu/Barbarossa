@@ -1,5 +1,7 @@
 """Tests for rate limiting."""
 
+import pytest
+
 from barbarossa.utils.rate_limit import RateLimiter
 
 
@@ -43,3 +45,19 @@ def test_rate_limiter_reset_on_success() -> None:
 
     limiter.increment_request()
     assert limiter.consecutive_errors == 0
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("requests_per_second", 0),
+        ("max_requests", 0),
+        ("request_timeout_seconds", 0),
+        ("max_redirects", 0),
+        ("max_consecutive_errors", 0),
+    ],
+)
+def test_rate_limiter_rejects_unsafe_limits(field: str, value: int) -> None:
+    """Direct API use cannot create a zero-limit or divide-by-zero limiter."""
+    with pytest.raises(ValueError):
+        RateLimiter(**{field: value})
