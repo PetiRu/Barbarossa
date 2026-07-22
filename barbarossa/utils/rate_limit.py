@@ -15,7 +15,7 @@ class RateLimiter:
     max_consecutive_errors: int = 3
 
     def __post_init__(self) -> None:
-        """Initialize rate limiter state."""
+        """Initialize internal state after dataclass init."""
         self.request_count = 0
         self.consecutive_errors = 0
         self.last_request_time: float | None = None
