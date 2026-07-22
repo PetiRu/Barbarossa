@@ -1,0 +1,47 @@
+# Configuration example for BARBAROSSA
+
+[scan]
+# Target URL for active probes
+target_url = "http://127.0.0.1:8000"
+
+# Source directory for static inspection
+source_directory = "./my-website"
+
+# List of authorized targets (public domains must be explicitly added)
+# Localhost and private IPs are allowed by default
+authorized_targets = [
+    "localhost",
+    "127.0.0.1",
+    "example.com",
+]
+
+[security]
+# Rate limiting
+requests_per_second = 2
+max_requests = 150
+request_timeout = 10
+max_redirects = 3
+
+# Error handling
+max_consecutive_errors = 3
+
+[output]
+# Output formats: console, json, html, sarif
+formats = ["console", "json", "html", "sarif"]
+
+# Directory for report generation
+output_directory = "./reports"
+
+[features]
+# Enable/disable scanning stages
+static_inspection = true
+active_probes = true
+
+# Educational mode
+learning_mode = false
+
+# Verbose logging
+verbose = false
+
+# Dry run - show scope without testing
+dry_run = false
