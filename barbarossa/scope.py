@@ -92,7 +92,9 @@ def validate_target_url(url: str, authorized_targets: list[str]) -> tuple[bool, 
         return False, f"Error validating URL: {e}"
 
 
-def validate_redirect(redirect_url: str, original_url: str, authorized_targets: list[str]) -> tuple[bool, str]:
+def validate_redirect(
+    redirect_url: str, original_url: str, authorized_targets: list[str]
+) -> tuple[bool, str]:
     """
     Validate that redirect stays in scope.
 
